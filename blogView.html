@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS — Blog View</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif; min-height: 100vh;
+            background: #05070d; color: #e8ecf5;
+            overflow-x: hidden; position: relative;
+        }
+        #bg3d { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .vignette {
+            position: fixed; inset: 0; z-index: 1; pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.8) 100%);
+        }
+        .container {
+            position: relative; z-index: 2;
+            max-width: 900px; margin: 0 auto; padding: 1.5rem 2rem 3rem;
+        }
+        .header-classic {
+            background: rgba(5,7,13,0.8);
+            backdrop-filter: blur(24px);
+            border-radius: 28px; padding: 1.2rem 2rem;
+            border: 1px solid rgba(255,45,85,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+            position: relative; overflow: hidden;
+        }
+        .header-classic::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #ff2d55, #00d4ff, #7c3aed, transparent);
+            animation: header-scan 4s linear infinite;
+        }
+        @keyframes header-scan { 0% { left: -100%; } 100% { left: 100%; } }
+        .logo h1 {
+            font-family: 'Orbitron', monospace; font-size: 1.6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff2d55, #00d4ff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .btn-back {
+            padding: 0.5rem 1.4rem; border-radius: 40px;
+            font-size: 0.8rem; font-weight: 600;
+            border: 1px solid rgba(255,45,85,0.2);
+            background: rgba(255,45,85,0.05);
+            color: #ff6b8a; cursor: pointer;
+            transition: all 0.3s; text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-back:hover {
+            background: rgba(255,45,85,0.1);
+            border-color: rgba(255,45,85,0.3);
+            transform: translateY(-2px);
+        }
+        .blog-content {
+            background: rgba(5,7,13,0.7);
+            backdrop-filter: blur(16px);
+            border-radius: 24px; padding: 2.5rem 3rem;
+            border: 1px solid rgba(255,45,85,0.06);
+            animation: fadeIn 0.5s ease; margin-top: 1rem;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .blog-content .blog-image {
+            width: 100%; max-height: 350px; object-fit: cover;
+            border-radius: 16px; margin-bottom: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .blog-content .blog-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem; font-weight: 900;
+            color: #fff; margin-bottom: 0.5rem;
+        }
+        .blog-content .blog-client {
+            font-size: 0.85rem; color: #ff6b8a;
+            background: rgba(255,45,85,0.1);
+            border: 1px solid rgba(255,45,85,0.2);
+            border-radius: 30px; padding: 0.2rem 1.2rem;
+            display: inline-block; margin-bottom: 1rem;
+        }
+        .blog-content .blog-author {
+            display: flex; align-items: center; gap: 0.8rem;
+            margin-bottom: 1.5rem; padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .blog-content .blog-author .avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg, #ff2d55, #00d4ff);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.1rem; color: #fff;
+        }
+        .blog-content .blog-author .info .name { font-weight: 600; color: #e8ecf5; }
+        .blog-content .blog-author .info .date { font-size: 0.75rem; color: #556688; }
+        .blog-content .blog-text {
+            color: #8899bb; font-size: 1rem;
+            line-height: 1.9; white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .code-block {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,45,85,0.1);
+            border-radius: 12px; padding: 1.2rem 1.5rem;
+            margin: 1rem 0; overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem; color: #34d399;
+        }
+        .code-block .lang-label {
+            font-size: 0.65rem; color: #556688;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 0.5rem; display: block;
+        }
+        .blog-tags {
+            display: flex; flex-wrap: wrap; gap: 0.5rem;
+            margin-top: 1.5rem; padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .blog-tags .tag {
+            padding: 0.2rem 1rem; border-radius: 30px;
+            font-size: 0.7rem; font-weight: 600;
+            background: rgba(255,45,85,0.08);
+            color: #ff6b8a;
+            border: 1px solid rgba(255,45,85,0.1);
+        }
+        .not-found { text-align: center; padding: 4rem 2rem; }
+        .not-found .icon { font-size: 4rem; color: #334466; margin-bottom: 1rem; display: block; opacity: 0.3; }
+        .not-found h2 { font-family: 'Orbitron', monospace; font-size: 1.8rem; color: #556688; }
+        .not-found p { color: #334466; margin: 0.5rem 0 1.5rem; }
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            background: rgba(5,7,13,0.95);
+            backdrop-filter: blur(20px);
+            padding: 1rem 1.8rem; border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            color: #e8ecf5; font-size: 0.9rem; z-index: 9999;
+            transform: translateY(100px); opacity: 0;
+            transition: all 0.4s ease; max-width: 400px;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-color: rgba(52,211,153,0.2); }
+        .toast i { margin-right: 10px; }
+        .toast.success i { color: #34d399; }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header-classic { flex-direction: column; text-align: center; padding: 1rem; }
+            .blog-content { padding: 1.5rem; }
+            .blog-content .blog-title { font-size: 1.5rem; }
+        }
+        @media (max-width: 480px) {
+            .blog-content { padding: 1rem; }
+            .blog-content .blog-title { font-size: 1.2rem; }
+            .blog-content .blog-author { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="bg3d"></div>
+<div class="vignette"></div>
+
+<div class="container">
+    <header class="header-classic">
+        <div class="logo"><h1>⚡ NEXUS</h1></div>
+        <a href="cmB.html" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Blogs</a>
+    </header>
+    <div id="blogContainer">
+        <div style="text-align:center; padding:3rem 0; color:#445566;">
+            <i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i>
+            <p style="margin-top:1rem;">Loading blog...</p>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMessage">Success!</span>
+</div>
+
+<script>
+    function init3DBackground() {
+        const container = document.getElementById('bg3d');
+        if (typeof THREE === 'undefined') return;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.setPixelRatio(devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        const count = 1500;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
+        for (let i = 0; i < count * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 80;
+            positions[i + 1] = (Math.random() - 0.5) * 80;
+            positions[i + 2] = (Math.random() - 0.5) * 80;
+            const c = Math.random();
+            if (c < 0.33) { colors[i]=1; colors[i+1]=0.18; colors[i+2]=0.33; }
+            else if (c < 0.66) { colors[i]=0; colors[i+1]=0.83; colors[i+2]=1; }
+            else { colors[i]=0.48; colors[i+1]=0.23; colors[i+2]=0.93; }
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        const material = new THREE.PointsMaterial({ size: 0.12, vertexColors: true, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+        camera.position.z = 30;
+        let mouseX = 0, mouseY = 0;
+        addEventListener('mousemove', e => {
+            mouseX = (e.clientX / innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / innerHeight - 0.5) * 2;
+        });
+        (function animate() {
+            requestAnimationFrame(animate);
+            particles.rotation.x += 0.0003;
+            particles.rotation.y += 0.0005;
+            camera.position.x += (mouseX * 3 - camera.position.x) * 0.02;
+            camera.position.y += (-mouseY * 3 - camera.position.y) * 0.02;
+            camera.lookAt(scene.position);
+            renderer.render(scene, camera);
+        })();
+        addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+    }
+
+    // 🔒 Escape ALL user-generated HTML
+    const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        toast.className = 'toast ' + type;
+        toastMessage.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    function getBlog(id) {
+        const blogs = JSON.parse(localStorage.getItem('nexusBlogs')) || [];
+        return blogs.find(b => b.id === id);
+    }
+
+    function incrementViews(blogId) {
+        const blogs = JSON.parse(localStorage.getItem('nexusBlogs')) || [];
+        const idx = blogs.findIndex(b => b.id === blogId);
+        if (idx === -1) return 0;
+        blogs[idx].views = (blogs[idx].views || 0) + 1;
+        localStorage.setItem('nexusBlogs', JSON.stringify(blogs));
+        return blogs[idx].views;
+    }
+
+    function renderBlog() {
+        const container = document.getElementById('blogContainer');
+        const id = localStorage.getItem('currentBlogId');
+
+        if (!id) {
+            container.innerHTML = `
+                <div class="not-found">
+                    <span class="icon"><i class="fas fa-blog"></i></span>
+                    <h2>No Blog Selected</h2>
+                    <p>Please go back and select a blog to read.</p>
+                    <a href="cmB.html" class="btn-back" style="display:inline-flex;"><i class="fas fa-arrow-left"></i> Back to Blogs</a>
+                </div>`;
+            return;
+        }
+
+        const blog = getBlog(id);
+        if (!blog) {
+            container.innerHTML = `
+                <div class="not-found">
+                    <span class="icon"><i class="fas fa-search"></i></span>
+                    <h2>Blog Not Found</h2>
+                    <p>The blog you're looking for doesn't exist or has been removed.</p>
+                    <a href="cmB.html" class="btn-back" style="display:inline-flex;"><i class="fas fa-arrow-left"></i> Back to Blogs</a>
+                </div>`;
+            return;
+        }
+
+        const views = incrementViews(blog.id);
+
+        // Build DOM safely
+        const article = document.createElement('article');
+        article.className = 'blog-content';
+
+        if (blog.image) {
+            const img = document.createElement('img');
+            img.className = 'blog-image';
+            img.src = blog.image; // data: URL, safe
+            img.alt = blog.title || '';
+            article.appendChild(img);
+        }
+
+        const clientEl = document.createElement('div');
+        clientEl.className = 'blog-client';
+        clientEl.textContent = blog.client || 'General';
+        article.appendChild(clientEl);
+
+        const titleEl = document.createElement('h1');
+        titleEl.className = 'blog-title';
+        titleEl.textContent = blog.title || 'Untitled';
+        article.appendChild(titleEl);
+
+        const authorEl = document.createElement('div');
+        authorEl.className = 'blog-author';
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.textContent = (blog.author || 'U').charAt(0).toUpperCase();
+        const info = document.createElement('div');
+        info.className = 'info';
+        const nameEl = document.createElement('div');
+        nameEl.className = 'name';
+        nameEl.textContent = blog.author || 'Unknown Author';
+        const dateEl = document.createElement('div');
+        dateEl.className = 'date';
+        dateEl.textContent = `${blog.date || 'No date'} · 👁️ ${views} views`;
+        info.appendChild(nameEl);
+        info.appendChild(dateEl);
+        authorEl.appendChild(avatar);
+        authorEl.appendChild(info);
+        article.appendChild(authorEl);
+
+        const textEl = document.createElement('div');
+        textEl.className = 'blog-text';
+        textEl.textContent = blog.content || 'No content available.';
+        article.appendChild(textEl);
+
+        if (blog.code) {
+            const codeWrap = document.createElement('div');
+            codeWrap.className = 'code-block';
+            const langLabel = document.createElement('span');
+            langLabel.className = 'lang-label';
+            langLabel.textContent = `💻 ${blog.language || 'code'}`;
+            const pre = document.createElement('pre');
+            pre.textContent = blog.code;
+            codeWrap.appendChild(langLabel);
+            codeWrap.appendChild(pre);
+            article.appendChild(codeWrap);
+        }
+
+        if (blog.link) {
+            const linkWrap = document.createElement('div');
+            linkWrap.style.margin = '1rem 0';
+            const a = document.createElement('a');
+            a.href = blog.link;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.style.cssText = 'color:#00d4ff;text-decoration:none;font-weight:600;';
+            a.innerHTML = '<i class="fas fa-download"></i> ';
+            a.appendChild(document.createTextNode('Download: ' + blog.link));
+            linkWrap.appendChild(a);
+            article.appendChild(linkWrap);
+        }
+
+        if (blog.tags && blog.tags.length) {
+            const tagsEl = document.createElement('div');
+            tagsEl.className = 'blog-tags';
+            blog.tags.forEach(tag => {
+                const span = document.createElement('span');
+                span.className = 'tag';
+                span.textContent = '#' + tag;
+                tagsEl.appendChild(span);
+            });
+            article.appendChild(tagsEl);
+        }
+
+        container.innerHTML = '';
+        container.appendChild(article);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        init3DBackground();
+        renderBlog();
+        const message = new URLSearchParams(location.search).get('message');
+        if (message) showToast(decodeURIComponent(message));
+    });
+</script>
+</body>
+</html>

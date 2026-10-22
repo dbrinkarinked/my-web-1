@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> NEXUS — Create Blog</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: #05070d;
+            color: #e8ecf5;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #bg3d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.8) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem 2rem 3rem;
+        }
+
+        /* ===== HEADER ===== */
+        .header-classic {
+            background: rgba(5, 7, 13, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 28px;
+            padding: 1.5rem 2.5rem;
+            border: 1px solid rgba(255, 45, 85, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-classic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ff2d55, #00d4ff, #7c3aed, transparent);
+            animation: header-scan 4s linear infinite;
+        }
+
+        @keyframes header-scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .logo-classic h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-shadow: 0 0 30px rgba(255, 45, 85, 0.3);
+        }
+
+        .logo-classic h1 .gradient {
+            background: linear-gradient(135deg, #ff2d55, #ff6b8a, #00d4ff, #7c3aed, #ff2d55);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-flow 8s ease-in-out infinite;
+        }
+
+        @keyframes gradient-flow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .logo-classic .sub {
+            font-size: 0.65rem;
+            color: #556688;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-header {
+            padding: 0.6rem 1.6rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 45, 85, 0.2);
+            background: rgba(255, 45, 85, 0.05);
+            color: #ff6b8a;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-header:hover {
+            background: rgba(255, 45, 85, 0.1);
+            border-color: rgba(255, 45, 85, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 45, 85, 0.2);
+        }
+
+        .btn-header i {
+            color: #ff2d55;
+        }
+
+        /* ===== FORM ===== */
+        .form-card {
+            background: rgba(5, 7, 13, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 28px;
+            padding: 2.5rem 3rem;
+            border: 1px solid rgba(255, 45, 85, 0.1);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+            animation: card-in 0.6s ease both;
+        }
+
+        @keyframes card-in {
+            0% { opacity: 0; transform: translateY(40px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ff2d55, #00d4ff, #7c3aed, transparent);
+            animation: header-scan-form 3s linear infinite;
+        }
+
+        @keyframes header-scan-form {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .form-card .form-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+            background: linear-gradient(135deg, #ff2d55, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #667a9a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.4rem;
+        }
+
+        .form-group label i {
+            color: #ff2d55;
+            margin-right: 6px;
+        }
+
+        .form-group label .required {
+            color: #ff2d55;
+            margin-left: 4px;
+        }
+
+        .form-group label .optional {
+            color: #556688;
+            font-size: 0.6rem;
+            font-weight: 400;
+            margin-left: 6px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
+            color: #e8ecf5;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: rgba(255, 45, 85, 0.3);
+            box-shadow: 0 0 30px rgba(255, 45, 85, 0.05);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: #334466;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group textarea.content-area {
+            min-height: 200px;
+        }
+
+        .form-group textarea.code-area {
+            min-height: 150px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 212, 255, 0.1);
+        }
+
+        .form-group textarea.code-area:focus {
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .form-group .char-counter {
+            text-align: right;
+            font-size: 0.7rem;
+            color: #556688;
+            margin-top: 0.3rem;
+        }
+
+        .form-group .char-counter span {
+            color: #ff2d55;
+            font-weight: 600;
+        }
+
+        .form-group .hint {
+            font-size: 0.7rem;
+            color: #445566;
+            margin-top: 0.3rem;
+        }
+
+        /* ===== IMAGE UPLOAD ===== */
+        .upload-area {
+            border: 2px dashed rgba(255, 45, 85, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(255, 45, 85, 0.4);
+            background: rgba(255, 45, 85, 0.03);
+        }
+
+        .upload-area.dragover {
+            border-color: #ff2d55;
+            background: rgba(255, 45, 85, 0.05);
+        }
+
+        .upload-area i {
+            font-size: 2.5rem;
+            color: #556688;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-area p {
+            color: #556688;
+            font-size: 0.85rem;
+        }
+
+        .upload-area .file-name {
+            color: #ff6b8a;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .image-preview {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .image-preview.show {
+            display: block;
+        }
+
+        /* ===== DOWNLOAD LINK ===== */
+        .download-link-group {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+        }
+
+        .download-link-group input {
+            flex: 1;
+        }
+
+        .download-link-group .btn-test-link {
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            background: rgba(0, 212, 255, 0.05);
+            color: #00d4ff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+
+        .download-link-group .btn-test-link:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.4);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-submit {
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ff2d55, #ff6b8a);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 0.5rem;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 45, 85, 0.3);
+        }
+
+        .btn-cancel {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
+            color: #556688;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+            margin-top: 0.8rem;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #8899bb;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(5, 7, 13, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 1rem 1.8rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            color: #e8ecf5;
+            font-size: 0.9rem;
+            z-index: 9999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s ease;
+            max-width: 400px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { border-color: rgba(52, 211, 153, 0.2); }
+        .toast.error { border-color: rgba(255, 45, 85, 0.2); }
+        .toast i { margin-right: 10px; }
+        .toast.success i { color: #34d399; }
+        .toast.error i { color: #ff2d55; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header-classic { flex-direction: column; align-items: stretch; text-align: center; padding: 1.2rem; }
+            .logo-classic h1 { font-size: 1.6rem; }
+            .header-actions { justify-content: center; }
+            .form-card { padding: 1.5rem; }
+            .download-link-group { flex-direction: column; }
+            .download-link-group .btn-test-link { width: 100%; justify-content: center; }
+        }
+
+        @media (max-width: 480px) {
+            .logo-classic h1 { font-size: 1.3rem; }
+            .btn-header { font-size: 0.7rem; padding: 0.4rem 1rem; }
+            .form-card { padding: 1rem; }
+            .form-card .form-title { font-size: 1.1rem; }
+            .upload-area { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="bg3d"></div>
+<div class="vignette"></div>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <header class="header-classic">
+        <div class="logo-classic">
+            <h1><span class="gradient"> NEXUS</span></h1>
+            <div class="sub"><i class="fas fa-skull"></i> create blog <i class="fas fa-skull"></i></div>
+        </div>
+        <div class="header-actions">
+            <a href="cmB.html" class="btn-header"><i class="fas fa-arrow-left"></i> Back to Blog</a>
+        </div>
+    </header>
+
+    <!-- ===== FORM ===== -->
+    <div class="form-card">
+        <div class="form-title"> Create a Blog</div>
+
+        <form id="blogForm" onsubmit="submitBlog(event)">
+
+            <!-- 1. Title -->
+            <div class="form-group">
+                <label><i class="fas fa-heading"></i> Title <span class="required">*</span></label>
+                <input type="text" id="blogTitle" placeholder="Enter blog title..." required>
+            </div>
+
+            <!-- 2. Client Name -->
+            <div class="form-group">
+                <label><i class="fas fa-cube"></i> Client Name <span class="required">*</span></label>
+                <input type="text" id="blogClient" placeholder="e.g. Wurst Client, Meteor Client..." required>
+            </div>
+
+            <!-- 3. Author Name -->
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Your Name <span class="required">*</span></label>
+                <input type="text" id="blogAuthor" placeholder="Your name or username..." required>
+            </div>
+
+            <!-- 4. Email (Optional) -->
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Email <span class="optional">(Optional)</span></label>
+                <input type="email" id="blogEmail" placeholder="your@email.com">
+                <div class="hint">📌 Not required, but helpful for contact</div>
+            </div>
+
+            <!-- 5. Description -->
+            <div class="form-group">
+                <label><i class="fas fa-align-left"></i> Description <span class="required">*</span></label>
+                <textarea class="content-area" id="blogContent" placeholder="Write your blog description here (max 400 words)..." oninput="updateWordCounter()" required></textarea>
+                <div class="char-counter"><span id="wordCount">0</span> / 400 words</div>
+            </div>
+
+            <!-- 6. Image Upload -->
+            <div class="form-group">
+                <label><i class="fas fa-image"></i> Upload Image <span class="optional">(Optional)</span></label>
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Click or drag & drop to upload image</p>
+                    <div class="file-name" id="fileName"></div>
+                    <input type="file" id="blogImage" accept="image/*" onchange="handleImageUpload(event)">
+                </div>
+                <div class="image-preview" id="imagePreview">
+                    <img id="previewImage" src="" alt="Preview">
+                </div>
+            </div>
+
+            <!-- 7. Download Link -->
+            <div class="form-group">
+                <label><i class="fas fa-link"></i> Download Link <span class="optional">(Optional)</span></label>
+                <div class="download-link-group">
+                    <input type="url" id="blogLink" placeholder="https://example.com/download">
+                    <button type="button" class="btn-test-link" onclick="testLink()"><i class="fas fa-external-link-alt"></i> Test</button>
+                </div>
+            </div>
+
+            <!-- 8. Code / Config (Optional) -->
+            <div class="form-group">
+                <label><i class="fas fa-code"></i> Code / Config <span class="optional">(Optional)</span></label>
+                <textarea class="code-area" id="blogCode" placeholder="Paste your code or config here..."></textarea>
+                <div class="hint">💡 You can paste HTML, CSS, JavaScript, Python, and many more languages</div>
+            </div>
+
+            <!-- 9. Language Selector -->
+            <div class="form-group">
+                <label><i class="fas fa-language"></i> Language <span class="optional">(Optional)</span></label>
+                <select id="blogLanguage">
+                    <option value="html">HTML</option>
+                    <option value="css">CSS</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                    <option value="java">Java</option>
+                    <option value="csharp">C#</option>
+                    <option value="cpp">C++</option>
+                    <option value="php">PHP</option>
+                    <option value="ruby">Ruby</option>
+                    <option value="go">Go</option>
+                    <option value="rust">Rust</option>
+                    <option value="swift">Swift</option>
+                    <option value="kotlin">Kotlin</option>
+                    <option value="typescript">TypeScript</option>
+                    <option value="sql">SQL</option>
+                    <option value="json">JSON</option>
+                    <option value="xml">XML</option>
+                    <option value="yaml">YAML</option>
+                    <option value="markdown">Markdown</option>
+                    <option value="bash">Bash</option>
+                    <option value="powershell">PowerShell</option>
+                    <option value="lua">Lua</option>
+                    <option value="perl">Perl</option>
+                    <option value="r">R</option>
+                </select>
+                <div class="hint">📌 Select the programming language of your code (if any)</div>
+            </div>
+
+            <!-- 10. Tags -->
+            <div class="form-group">
+                <label><i class="fas fa-tags"></i> Tags <span class="optional">(Optional)</span></label>
+                <input type="text" id="blogTags" placeholder="e.g. ghost, pvp, utility (comma separated)">
+                <div class="hint">📌 Separate tags with commas</div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-paper-plane"></i> Publish Blog
+            </button>
+
+            <button type="button" class="btn-cancel" onclick="resetForm()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </form>
+    </div>
+
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMessage">Success!</span>
+</div>
+
+<script>
+    // ===== 3D BACKGROUND =====
+    function init3DBackground() {
+        const container = document.getElementById('bg3d');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const particleCount = 2000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 100;
+            positions[i + 1] = (Math.random() - 0.5) * 100;
+            positions[i + 2] = (Math.random() - 0.5) * 100;
+
+            const colorChoice = Math.random();
+            if (colorChoice < 0.33) {
+                colors[i] = 1; colors[i + 1] = 0.18; colors[i + 2] = 0.33;
+            } else if (colorChoice < 0.66) {
+                colors[i] = 0; colors[i + 1] = 0.83; colors[i + 2] = 1;
+            } else {
+                colors[i] = 0.48; colors[i + 1] = 0.23; colors[i + 2] = 0.93;
+            }
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.15,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        camera.position.z = 30;
+
+        let mouseX = 0;
+        let mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particles.rotation.x += 0.0005;
+            particles.rotation.y += 0.0008;
+            camera.position.x += (mouseX * 5 - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY * 5 - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    }
+
+    // ===== WORD COUNTER =====
+   function updateWordCounter() {
+    const content = document.getElementById('blogContent').value;
+    const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+    const el = document.getElementById('wordCount');
+    el.textContent = words;
+    el.style.color = words > 400 ? '#ff2d55' : '#556688';
+}
+    // ===== IMAGE UPLOAD =====
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('imagePreview').classList.add('show');
+                document.getElementById('fileName').textContent = '📷 ' + file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // ===== DRAG & DROP =====
+    const uploadArea = document.getElementById('uploadArea');
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const input = document.getElementById('blogImage');
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            handleImageUpload({ target: input });
+        }
+    });
+
+    // ===== TEST LINK =====
+    function testLink() {
+        const link = document.getElementById('blogLink').value.trim();
+        if (link) {
+            window.open(link, '_blank');
+            showToast('🔗 Opening link...', 'success');
+        } else {
+            showToast('⚠️ Please enter a download link first!', 'error');
+        }
+    }
+
+    // ===== TOAST =====
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        toast.className = 'toast ' + type;
+        toastMessage.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    // ===== RESET FORM =====
+    function resetForm() {
+        if (confirm('Are you sure you want to cancel? All data will be lost.')) {
+            document.getElementById('blogForm').reset();
+            document.getElementById('imagePreview').classList.remove('show');
+            document.getElementById('fileName').textContent = '';
+            document.getElementById('wordCount').textContent = '0';
+            showToast('Form cleared', 'success');
+        }
+    }
+
+    // ===== SUBMIT BLOG =====
+    function submitBlog(e) {
+        e.preventDefault();
+
+        const title = document.getElementById('blogTitle').value.trim();
+        const client = document.getElementById('blogClient').value.trim();
+        const author = document.getElementById('blogAuthor').value.trim();
+        const email = document.getElementById('blogEmail').value.trim();
+        const content = document.getElementById('blogContent').value.trim();
+        const code = document.getElementById('blogCode').value.trim();
+        const link = document.getElementById('blogLink').value.trim();
+        const language = document.getElementById('blogLanguage').value;
+        const tags = document.getElementById('blogTags').value.split(',').map(t => t.trim()).filter(t => t);
+
+        // Word count check
+        const words = content ? content.split(/\s+/).length : 0;
+        if (words > 400) {
+            showToast('⚠️ Description exceeds 400 words!', 'error');
+            return;
+        }
+
+        if (!title || !client || !author || !content) {
+            showToast('⚠️ Please fill in all required fields! (Title, Client, Name, Description)', 'error');
+            return;
+        }
+
+        // Get image
+        const imageInput = document.getElementById('blogImage');
+        let imageData = null;
+        if (imageInput.files && imageInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imageData = e.target.result;
+                saveBlog(title, client, author, email, content, code, language, link, tags, imageData);
+            };
+            reader.readAsDataURL(imageInput.files[0]);
+        } else {
+            saveBlog(title, client, author, email, content, code, language, link, tags, null);
+        }
+    }
+
+    function saveBlog(title, client, author, email, content, code, language, link, tags, imageData) {
+        let blogs = JSON.parse(localStorage.getItem('nexusBlogs')) || [];
+
+        const newBlog = {
+            id: Date.now().toString(),
+            title,
+            client,
+            author,
+            email: email || '',
+            content,
+            code: code || '',
+            language: language || 'html',
+            link: link || '',
+            image: imageData || '',
+            tags: tags.length ? tags : ['general'],
+            date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+            views: 0
+        };
+
+        blogs.push(newBlog);
+        localStorage.setItem('nexusBlogs', JSON.stringify(blogs));
+
+        showToast('✅ Blog published successfully!', 'success');
+
+        document.getElementById('blogForm').reset();
+        document.getElementById('imagePreview').classList.remove('show');
+        document.getElementById('fileName').textContent = '';
+        document.getElementById('wordCount').textContent = '0';
+
+        setTimeout(() => {
+            window.location.href = 'cmB.html';
+        }, 1500);
+    }
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', function() {
+        init3DBackground();
+    });
+</script>
+
+</body>
+</html>

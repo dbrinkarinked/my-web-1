@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> NEXUS — Collaboration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: #05070d;
+            color: #e8ecf5;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #bg3d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.8) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem 3rem;
+        }
+
+        /* ===== HEADER ===== */
+        .header-classic {
+            background: rgba(5, 7, 13, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 28px;
+            padding: 1.5rem 2.5rem;
+            border: 1px solid rgba(255, 45, 85, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-classic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ff2d55, #00d4ff, #7c3aed, transparent);
+            animation: header-scan 4s linear infinite;
+        }
+
+        @keyframes header-scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .logo-classic h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-shadow: 0 0 30px rgba(255, 45, 85, 0.3);
+        }
+
+        .logo-classic h1 .gradient {
+            background: linear-gradient(135deg, #ff2d55, #ff6b8a, #00d4ff, #7c3aed, #ff2d55);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-flow 8s ease-in-out infinite;
+        }
+
+        @keyframes gradient-flow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .logo-classic .sub {
+            font-size: 0.65rem;
+            color: #556688;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .btn-back {
+            padding: 0.6rem 1.6rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 45, 85, 0.2);
+            background: rgba(255, 45, 85, 0.05);
+            color: #ff6b8a;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 45, 85, 0.1);
+            border-color: rgba(255, 45, 85, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 45, 85, 0.2);
+        }
+
+        /* ===== COLLABORATION CONTENT ===== */
+        .collab-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .collab-title h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff2d55, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .collab-title p {
+            color: #556688;
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .collab-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .collab-card {
+            background: rgba(5, 7, 13, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 2rem 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            animation: card-enter 0.6s ease both;
+        }
+
+        .collab-card:nth-child(1) { animation-delay: 0.1s; }
+        .collab-card:nth-child(2) { animation-delay: 0.2s; }
+
+        @keyframes card-enter {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .collab-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(255, 45, 85, 0.2);
+            background: rgba(5, 7, 13, 0.8);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .collab-card .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .collab-card h3 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #e8ecf5;
+            margin-bottom: 1rem;
+        }
+
+        .collab-card .card-divider {
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #ff2d55, #00d4ff);
+            margin-bottom: 1.2rem;
+            border-radius: 10px;
+        }
+
+        .collab-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .collab-card ul li {
+            padding: 0.6rem 0;
+            color: #8899bb;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .collab-card ul li:last-child {
+            border-bottom: none;
+        }
+
+        .collab-card ul li i {
+            color: #ff2d55;
+            width: 22px;
+            font-size: 1rem;
+        }
+
+        .collab-card ul li .highlight {
+            color: #ff6b8a;
+            font-weight: 600;
+        }
+
+        .collab-card ul li .badge-collab {
+            background: rgba(255, 45, 85, 0.1);
+            border: 1px solid rgba(255, 45, 85, 0.2);
+            color: #ff6b8a;
+            padding: 0.1rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        /* ===== FULL CARD ===== */
+        .collab-full {
+            background: rgba(5, 7, 13, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 2.5rem 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            animation: card-enter 0.6s ease both;
+            animation-delay: 0.3s;
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .collab-full:hover {
+            transform: translateY(-6px);
+            border-color: rgba(255, 45, 85, 0.2);
+            background: rgba(5, 7, 13, 0.8);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .collab-full .full-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .collab-full h3 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #e8ecf5;
+            margin-bottom: 1rem;
+        }
+
+        .collab-full .full-divider {
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, #ff2d55, #00d4ff);
+            margin: 0 auto 1.5rem;
+            border-radius: 10px;
+        }
+
+        .collab-full p {
+            color: #8899bb;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .collab-full .requirement-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .collab-full .requirement-tags .tag {
+            padding: 0.4rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #667a9a;
+        }
+
+        .collab-full .requirement-tags .tag i {
+            color: #ff2d55;
+            margin-right: 6px;
+        }
+
+        .collab-full .requirement-tags .tag.active-tag {
+            background: rgba(255, 45, 85, 0.08);
+            border-color: rgba(255, 45, 85, 0.2);
+            color: #ff6b8a;
+        }
+
+        /* ===== BUTTON ===== */
+        .btn-collab {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 1rem 3rem;
+            border-radius: 60px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff2d55, #ff6b8a);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            font-family: 'Inter', sans-serif;
+            text-decoration: none;
+            margin: 1rem auto;
+            display: inline-flex;
+        }
+
+        .btn-collab:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(255, 45, 85, 0.3);
+        }
+
+        .btn-collab i {
+            font-size: 1.2rem;
+        }
+
+        .btn-center {
+            text-align: center;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(5, 7, 13, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 1rem 1.8rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            color: #e8ecf5;
+            font-size: 0.9rem;
+            z-index: 9999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s ease;
+            max-width: 400px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { border-color: rgba(52, 211, 153, 0.2); }
+        .toast.error { border-color: rgba(255, 45, 85, 0.2); }
+        .toast i { margin-right: 10px; }
+        .toast.success i { color: #34d399; }
+        .toast.error i { color: #ff2d55; }
+
+        /* ===== FOOTER ===== */
+        .footer-classic {
+            text-align: center;
+            padding: 3rem 0 1rem;
+            color: #223344;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            border-top: 1px solid rgba(255, 255, 255, 0.02);
+            margin-top: 3rem;
+        }
+
+        .footer-classic i {
+            color: #ff2d55;
+            margin: 0 6px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .collab-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header-classic { flex-direction: column; align-items: stretch; text-align: center; padding: 1.2rem; }
+            .logo-classic h1 { font-size: 1.6rem; }
+            .collab-title h2 { font-size: 1.8rem; }
+            .collab-card { padding: 1.5rem; }
+            .collab-full { padding: 1.5rem; }
+            .btn-collab { padding: 0.8rem 2rem; font-size: 1rem; }
+        }
+
+        @media (max-width: 480px) {
+            .logo-classic h1 { font-size: 1.3rem; }
+            .collab-title h2 { font-size: 1.4rem; }
+            .collab-card ul li { font-size: 0.8rem; }
+            .collab-full .requirement-tags .tag { font-size: 0.6rem; padding: 0.3rem 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="bg3d"></div>
+<div class="vignette"></div>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <header class="header-classic">
+        <div class="logo-classic">
+            <h1><span class="gradient"> NEXUS</span></h1>
+            <div class="sub"><i class="fas fa-skull"></i>collaboration & team<i class="fas fa-skull"></i></div>
+        </div>
+        <a href="cm.html" class="btn-back"><i class="fas fa-arrow-left"></i>Back</a>
+    </header>
+
+    <!-- COLLABORATION TITLE -->
+    <div class="collab-title">
+        <h2> Join Our Team</h2>
+        <p>Become a part of the NEXUS collaboration team</p>
+    </div>
+
+    <!-- ===== COLLABORATION GRID ===== -->
+    <div class="collab-grid">
+
+        <!-- ===== CARD 1: SKILLS ===== -->
+        <div class="collab-card">
+            <span class="card-icon">🎯</span>
+            <h3>Skills & Experience</h3>
+            <div class="card-divider"></div>
+            <ul>
+                <li><i class="fas fa-check-circle"></i> <span class="highlight">Expert knowledge</span> of cheat clients <span class="badge-collab">Required</span></li>
+                <li><i class="fas fa-check-circle"></i> <span class="highlight">Full English</span> language proficiency <span class="badge-collab">Required</span></li>
+                <li><i class="fas fa-check-circle"></i> <span class="highlight">1+ year</span> experience in Minecraft cheating <span class="badge-collab">Required</span></li>
+                <li><i class="fas fa-check-circle"></i> <span class="highlight">Config creation</span> & combination skills <span class="badge-collab">Required</span></li>
+                <li><i class="fas fa-check-circle"></i> <span class="highlight">Age 13+</span> <span class="badge-collab">Required</span></li>
+            </ul>
+        </div>
+
+        <!-- ===== CARD 2: EQUIPMENT ===== -->
+        <div class="collab-card">
+            <span class="card-icon">💻</span>
+            <h3>Equipment & Setup</h3>
+            <div class="card-divider"></div>
+            <ul>
+                <li><i class="fas fa-check-circle"></i> <span class="highlight">PC or Laptop</span> with good performance <span class="badge-collab">Required</span></li>
+                <li><i class="fas fa-check-circle"></i> <span class="highlight">Stable internet</span> connection <span class="badge-collab">Required</span></li>
+                <li><i class="fas fa-check-circle"></i> <span class="highlight">Microphone</span> & headset <span class="badge-collab">Required</span></li>
+                <li><i class="fas fa-check-circle"></i> <span class="highlight">HTML coding</span> knowledge (basic to advanced) <span class="badge-collab">Required</span></li>
+                <li><i class="fas fa-check-circle"></i> <span class="highlight">Discord</span> for team communication <span class="badge-collab">Required</span></li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- ===== FULL CARD: DESCRIPTION ===== -->
+    <div class="collab-full">
+        <span class="full-icon">🌟</span>
+        <h3>Why Join NEXUS?</h3>
+        <div class="full-divider"></div>
+        <p>
+            NEXUS is a growing community of Minecraft cheat enthusiasts. By joining our collaboration team, 
+            you'll have the opportunity to work with like-minded individuals, share your knowledge, 
+            and help shape the future of the ultimate Minecraft client database.
+        </p>
+        <p style="margin-top: 1rem;">
+            We're looking for dedicated, passionate, and skilled individuals who want to make a difference 
+            in the Minecraft cheating community. If you have what it takes, we want to hear from you!
+        </p>
+        <div class="requirement-tags">
+            <span class="tag active-tag"><i class="fas fa-check"></i> Cheat Expert</span>
+            <span class="tag active-tag"><i class="fas fa-check"></i> English Fluent</span>
+            <span class="tag active-tag"><i class="fas fa-check"></i> 1+ Year Exp</span>
+            <span class="tag active-tag"><i class="fas fa-check"></i> Config Master</span>
+            <span class="tag active-tag"><i class="fas fa-check"></i> Age 13+</span>
+            <span class="tag"><i class="fas fa-check"></i> PC/Laptop</span>
+            <span class="tag"><i class="fas fa-check"></i> Good Internet</span>
+            <span class="tag"><i class="fas fa-check"></i> Mic & Headset</span>
+            <span class="tag"><i class="fas fa-check"></i> HTML Knowledge</span>
+        </div>
+    </div>
+
+    <!-- ===== BUTTON ===== -->
+    <div class="btn-center">
+        <a href="mcCoR.html" class="btn-collab" onclick="applyCollaboration()">
+            <i class="fas fa-handshake"></i> Collaboration
+        </a>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <div class="footer-classic">
+        <i class="fas fa-skull"></i> NEXUS — Collaboration & Team <i class="fas fa-skull"></i>
+        <br><span style="font-size:0.6rem; opacity:0.4;">2026  Join the team and make a difference</span>
+    </div>
+
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMessage">Success!</span>
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+    // ===== 3D BACKGROUND =====
+    function init3DBackground() {
+        const container = document.getElementById('bg3d');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const particleCount = 2000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 100;
+            positions[i + 1] = (Math.random() - 0.5) * 100;
+            positions[i + 2] = (Math.random() - 0.5) * 100;
+
+            const colorChoice = Math.random();
+            if (colorChoice < 0.33) {
+                colors[i] = 1; colors[i + 1] = 0.18; colors[i + 2] = 0.33;
+            } else if (colorChoice < 0.66) {
+                colors[i] = 0; colors[i + 1] = 0.83; colors[i + 2] = 1;
+            } else {
+                colors[i] = 0.48; colors[i + 1] = 0.23; colors[i + 2] = 0.93;
+            }
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.15,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        camera.position.z = 30;
+
+        let mouseX = 0;
+        let mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particles.rotation.x += 0.0005;
+            particles.rotation.y += 0.0008;
+            camera.position.x += (mouseX * 5 - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY * 5 - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    }
+
+    // ===== TOAST =====
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        toast.className = 'toast ' + type;
+        toastMessage.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', function() {
+        init3DBackground();
+    });
+</script>
+
+</body>
+</html>

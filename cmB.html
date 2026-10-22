@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS — Blog</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif; min-height: 100vh;
+            background: #05070d; color: #e8ecf5;
+            overflow-x: hidden; position: relative;
+        }
+        #bg3d { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .vignette {
+            position: fixed; inset: 0; z-index: 1; pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.8) 100%);
+        }
+        .container {
+            position: relative; z-index: 2;
+            max-width: 1000px; margin: 0 auto; padding: 1.5rem 2rem 3rem;
+        }
+        .header-classic {
+            background: rgba(5,7,13,0.8);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-radius: 28px; padding: 1.5rem 2.5rem;
+            border: 1px solid rgba(255,45,85,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+            position: relative; overflow: hidden;
+        }
+        .header-classic::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #ff2d55, #00d4ff, #7c3aed, transparent);
+            animation: header-scan 4s linear infinite;
+        }
+        @keyframes header-scan { 0% { left: -100%; } 100% { left: 100%; } }
+        .logo-classic h1 {
+            font-family: 'Orbitron', monospace; font-size: 2rem;
+            font-weight: 900; letter-spacing: 3px;
+        }
+        .logo-classic h1 .gradient {
+            background: linear-gradient(135deg, #ff2d55, #ff6b8a, #00d4ff, #7c3aed, #ff2d55);
+            background-size: 400% 400%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: gradient-flow 8s ease-in-out infinite;
+        }
+        @keyframes gradient-flow { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .logo-classic .sub {
+            font-size: 0.65rem; color: #556688;
+            letter-spacing: 4px; text-transform: uppercase;
+            font-weight: 500; margin-top: 4px;
+        }
+        .header-actions { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
+        .btn-header {
+            padding: 0.6rem 1.6rem; border-radius: 40px;
+            font-size: 0.8rem; font-weight: 600;
+            border: 1px solid rgba(255,45,85,0.2);
+            background: rgba(255,45,85,0.05);
+            color: #ff6b8a; cursor: pointer; transition: all 0.3s;
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none; font-family: 'Inter', sans-serif;
+        }
+        .btn-header:hover {
+            background: rgba(255,45,85,0.1);
+            border-color: rgba(255,45,85,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255,45,85,0.2);
+        }
+        .btn-header i { color: #ff2d55; }
+        .btn-header.create {
+            background: linear-gradient(135deg, #ff2d55, #ff6b8a);
+            border-color: transparent; color: #fff;
+        }
+        .btn-header.create i { color: #fff; }
+
+        .empty-page {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 300px;
+            padding: 2rem; text-align: center;
+        }
+        .empty-page .empty-icon {
+            font-size: 5rem; color: #334466;
+            margin-bottom: 1.5rem; opacity: 0.3;
+        }
+        .empty-page h2 {
+            font-family: 'Orbitron', monospace; font-size: 1.8rem;
+            font-weight: 700; color: #556688; margin-bottom: 0.5rem;
+        }
+        .empty-page p { color: #334466; font-size: 0.95rem; margin-bottom: 2rem; }
+        .empty-page .btn-create-empty {
+            padding: 0.8rem 2rem; border-radius: 40px;
+            font-size: 0.9rem; font-weight: 700;
+            background: linear-gradient(135deg, #ff2d55, #ff6b8a);
+            border: none; color: #fff; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 8px;
+            font-family: 'Inter', sans-serif; transition: all 0.3s;
+        }
+        .empty-page .btn-create-empty:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255,45,85,0.3);
+        }
+
+        .blog-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem; margin-top: 2rem; margin-bottom: 3rem;
+        }
+        .blog-card {
+            background: rgba(5,7,13,0.85);
+            backdrop-filter: blur(24px);
+            border-radius: 20px; overflow: hidden;
+            border: 1px solid rgba(255,45,85,0.1);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            cursor: pointer; transition: all 0.3s ease;
+            position: relative;
+        }
+        .blog-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(255,45,85,0.2);
+            border-color: rgba(255,45,85,0.3);
+        }
+        .blog-card img { width: 100%; height: 160px; object-fit: cover; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .blog-card-content { padding: 1rem 1.2rem 1.5rem; }
+        .blog-card-content h3 {
+            font-family: 'Orbitron', monospace; font-size: 1.1rem;
+            font-weight: 700; color: #fff; margin-bottom: 0.5rem;
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .blog-card-content p {
+            font-size: 0.85rem; color: #8899bb; margin-bottom: 1rem;
+            display: -webkit-box; -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .blog-card-meta {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.75rem; color: #556688;
+            border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.8rem;
+        }
+        .blog-delete {
+            position: absolute; top: 8px; right: 8px;
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(0,0,0,0.7); border: 1px solid rgba(255,45,85,0.3);
+            color: #ff6b8a; cursor: pointer; font-size: 0.8rem;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: all 0.3s; z-index: 2;
+        }
+        .blog-card:hover .blog-delete { opacity: 1; }
+        .blog-delete:hover { background: rgba(255,45,85,0.2); transform: scale(1.1); }
+
+        .form-container { display: none; animation: fadeIn 0.5s ease; margin-top: 0; }
+        .form-container.show { display: block; }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .form-card {
+            background: rgba(5,7,13,0.85);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-radius: 28px; padding: 2.5rem 3rem;
+            border: 1px solid rgba(255,45,85,0.1);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+            position: relative; overflow: hidden;
+        }
+        .form-card .form-title {
+            font-family: 'Orbitron', monospace; font-size: 1.4rem;
+            font-weight: 700; text-align: center;
+            background: linear-gradient(135deg, #ff2d55, #00d4ff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+        }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label {
+            display: block; font-size: 0.75rem; font-weight: 600;
+            color: #667a9a; text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 0.4rem;
+        }
+        .form-group label i { color: #ff2d55; margin-right: 6px; }
+        .form-group label .required { color: #ff2d55; margin-left: 4px; }
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 0.8rem 1rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.03);
+            color: #e8ecf5; font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease; outline: none;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: rgba(255,45,85,0.3);
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 0 30px rgba(255,45,85,0.05);
+        }
+        .form-group input::placeholder, .form-group textarea::placeholder { color: #334466; }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .form-group textarea.content-area { min-height: 200px; }
+        .form-group .char-counter {
+            text-align: right; font-size: 0.7rem; color: #556688; margin-top: 0.3rem;
+        }
+        .form-group .char-counter span { color: #ff2d55; font-weight: 600; }
+
+        .upload-area {
+            border: 2px dashed rgba(255,45,85,0.2);
+            border-radius: 16px; padding: 2rem;
+            text-align: center; cursor: pointer;
+            transition: all 0.3s ease; position: relative;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: rgba(255,45,85,0.4);
+            background: rgba(255,45,85,0.03);
+        }
+        .upload-area i { font-size: 2.5rem; color: #556688; display: block; margin-bottom: 0.5rem; }
+        .upload-area p { color: #556688; font-size: 0.85rem; }
+        .upload-area .file-name { color: #ff6b8a; font-weight: 600; margin-top: 0.5rem; }
+        .upload-area input[type="file"] {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; opacity: 0; cursor: pointer;
+        }
+        .image-preview { margin-top: 1rem; display: none; }
+        .image-preview.show { display: block; }
+        .image-preview img {
+            max-width: 100%; max-height: 200px;
+            border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .download-link-group { display: flex; gap: 0.8rem; align-items: center; }
+        .download-link-group input { flex: 1; }
+        .download-link-group .btn-test-link {
+            padding: 0.6rem 1.2rem; border-radius: 40px;
+            font-size: 0.75rem; font-weight: 600;
+            border: 1px solid rgba(0,212,255,0.2);
+            background: rgba(0,212,255,0.05);
+            color: #00d4ff; cursor: pointer;
+            transition: all 0.3s; font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .download-link-group .btn-test-link:hover {
+            background: rgba(0,212,255,0.1);
+            border-color: rgba(0,212,255,0.4);
+        }
+
+        .btn-submit {
+            width: 100%; padding: 0.9rem; border-radius: 40px;
+            font-size: 1rem; font-weight: 700;
+            border: none; cursor: pointer; transition: all 0.4s;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ff2d55, #ff6b8a);
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; margin-top: 0.5rem;
+        }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(255,45,85,0.3); }
+        .btn-cancel {
+            width: 100%; padding: 0.8rem; border-radius: 40px;
+            font-size: 0.9rem; font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.02);
+            color: #556688; cursor: pointer;
+            transition: all 0.3s; font-family: 'Inter', sans-serif;
+            margin-top: 0.8rem;
+        }
+        .btn-cancel:hover { background: rgba(255,255,255,0.05); color: #8899bb; }
+
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            background: rgba(5,7,13,0.95);
+            backdrop-filter: blur(20px);
+            padding: 1rem 1.8rem; border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            color: #e8ecf5; font-size: 0.9rem; z-index: 9999;
+            transform: translateY(100px); opacity: 0;
+            transition: all 0.4s ease; max-width: 400px;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-color: rgba(52,211,153,0.2); }
+        .toast.error { border-color: rgba(255,45,85,0.2); }
+        .toast i { margin-right: 10px; }
+        .toast.success i { color: #34d399; }
+        .toast.error i { color: #ff2d55; }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header-classic { flex-direction: column; align-items: stretch; text-align: center; padding: 1.2rem; }
+            .logo-classic h1 { font-size: 1.6rem; }
+            .header-actions { justify-content: center; }
+            .form-card { padding: 1.5rem; }
+            .download-link-group { flex-direction: column; }
+            .download-link-group .btn-test-link { width: 100%; justify-content: center; }
+        }
+        @media (max-width: 480px) {
+            .logo-classic h1 { font-size: 1.3rem; }
+            .btn-header { font-size: 0.7rem; padding: 0.4rem 1rem; }
+            .form-card { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="bg3d"></div>
+<div class="vignette"></div>
+
+<div class="container">
+    <header class="header-classic">
+        <div class="logo-classic">
+            <h1><span class="gradient">NEXUS</span></h1>
+            <div class="sub"><i class="fas fa-skull"></i> blog <i class="fas fa-skull"></i></div>
+        </div>
+        <div class="header-actions">
+            <a href="cm.html" class="btn-header"><i class="fas fa-arrow-left"></i> Back</a>
+            <button class="btn-header create" id="createBtn"><i class="fas fa-plus"></i> Create a Blog</button>
+        </div>
+    </header>
+
+    <div class="empty-page" id="emptyPage">
+        <div class="empty-icon"><i class="fas fa-blog"></i></div>
+        <h2>No Blogs Yet</h2>
+        <p>Start by creating your first blog post</p>
+        <button class="btn-create-empty" id="emptyCreateBtn">
+            <i class="fas fa-plus"></i> Create Your First Blog
+        </button>
+    </div>
+
+    <div class="blog-list" id="blogList" style="display: none;"></div>
+
+    <div class="form-container" id="formContainer">
+        <div class="form-card">
+            <div class="form-title">Write Your Blog</div>
+            <form id="blogForm" onsubmit="submitBlog(event)">
+                <div class="form-group">
+                    <label><i class="fas fa-heading"></i> Blog Title <span class="required">*</span></label>
+                    <input type="text" id="blogTitle" placeholder="Enter blog title..." required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Client Name <span class="required">*</span></label>
+                    <input type="text" id="blogClient" placeholder="e.g. Wurst Client, Meteor Client..." required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Your Name <span class="required">*</span></label>
+                    <input type="text" id="blogAuthor" placeholder="Your name or username..." required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Content (max 400 words) <span class="required">*</span></label>
+                    <textarea class="content-area" id="blogContent" placeholder="Write your blog content here (max 400 words)..." oninput="updateWordCounter()" required></textarea>
+                    <div class="char-counter"><span id="wordCount">0</span> / 400 words</div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Upload Image</label>
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click or drag & drop to upload image</p>
+                        <div class="file-name" id="fileName"></div>
+                        <input type="file" id="blogImage" accept="image/*" onchange="handleImageUpload(event)">
+                    </div>
+                    <div class="image-preview" id="imagePreview">
+                        <img id="previewImage" src="" alt="Preview">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-link"></i> Download Link</label>
+                    <div class="download-link-group">
+                        <input type="url" id="blogLink" placeholder="https://example.com/download">
+                        <button type="button" class="btn-test-link" onclick="testLink()"><i class="fas fa-external-link-alt"></i> Test</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-tags"></i> Tags</label>
+                    <input type="text" id="blogTags" placeholder="e.g. ghost, pvp, utility (comma separated)">
+                </div>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-paper-plane"></i> Publish Blog
+                </button>
+                <button type="button" class="btn-cancel" onclick="hideForm()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMessage">Success!</span>
+</div>
+
+<script>
+    // ===== 3D BG =====
+    function init3DBackground() {
+        const container = document.getElementById('bg3d');
+        if (typeof THREE === 'undefined') return;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.setPixelRatio(devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        const count = 2000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
+        for (let i = 0; i < count * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 100;
+            positions[i + 1] = (Math.random() - 0.5) * 100;
+            positions[i + 2] = (Math.random() - 0.5) * 100;
+            const c = Math.random();
+            if (c < 0.33) { colors[i]=1; colors[i+1]=0.18; colors[i+2]=0.33; }
+            else if (c < 0.66) { colors[i]=0; colors[i+1]=0.83; colors[i+2]=1; }
+            else { colors[i]=0.48; colors[i+1]=0.23; colors[i+2]=0.93; }
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        const material = new THREE.PointsMaterial({ size: 0.15, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+        camera.position.z = 30;
+        let mouseX = 0, mouseY = 0;
+        addEventListener('mousemove', e => {
+            mouseX = (e.clientX / innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / innerHeight - 0.5) * 2;
+        });
+        (function animate() {
+            requestAnimationFrame(animate);
+            particles.rotation.x += 0.0005;
+            particles.rotation.y += 0.0008;
+            camera.position.x += (mouseX * 5 - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY * 5 - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            renderer.render(scene, camera);
+        })();
+        addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+    }
+
+    const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        toast.className = 'toast ' + type;
+        toastMessage.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    function showForm() {
+        document.getElementById('emptyPage').style.display = 'none';
+        document.getElementById('blogList').style.display = 'none';
+        document.getElementById('formContainer').classList.add('show');
+        document.getElementById('blogTitle').focus();
+    }
+
+    function hideForm() {
+        document.getElementById('formContainer').classList.remove('show');
+        document.getElementById('blogForm').reset();
+        document.getElementById('imagePreview').classList.remove('show');
+        document.getElementById('fileName').textContent = '';
+        document.getElementById('wordCount').textContent = '0';
+        loadBlogs();
+    }
+
+    function updateWordCounter() {
+        const content = document.getElementById('blogContent').value;
+        const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+        const el = document.getElementById('wordCount');
+        el.textContent = words;
+        el.style.color = words > 400 ? '#ff2d55' : '#ff2d55';
+    }
+
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('previewImage').src = e.target.result;
+            document.getElementById('imagePreview').classList.add('show');
+            document.getElementById('fileName').textContent = '📷 ' + file.name;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    const uploadArea = document.getElementById('uploadArea');
+    uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', e => { e.preventDefault(); uploadArea.classList.remove('dragover'); });
+    uploadArea.addEventListener('drop', e => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const input = document.getElementById('blogImage');
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            handleImageUpload({ target: input });
+        }
+    });
+
+    function testLink() {
+        const link = document.getElementById('blogLink').value.trim();
+        if (link) { window.open(link, '_blank', 'noopener,noreferrer'); showToast('🔗 Opening link...'); }
+        else showToast('⚠️ Please enter a download link first!', 'error');
+    }
+
+    function submitBlog(e) {
+        e.preventDefault();
+        const title = document.getElementById('blogTitle').value.trim();
+        const client = document.getElementById('blogClient').value.trim();
+        const author = document.getElementById('blogAuthor').value.trim();
+        const content = document.getElementById('blogContent').value.trim();
+        const link = document.getElementById('blogLink').value.trim();
+        const tags = document.getElementById('blogTags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+        const words = content ? content.split(/\s+/).length : 0;
+        if (words > 400) return showToast('⚠️ Content exceeds 400 words!', 'error');
+        if (!title || !client || !author || !content) return showToast('⚠️ Please fill in all required fields!', 'error');
+
+        const imageInput = document.getElementById('blogImage');
+        if (imageInput.files && imageInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = ev => saveBlog(title, client, author, content, link, tags, ev.target.result);
+            reader.readAsDataURL(imageInput.files[0]);
+        } else {
+            saveBlog(title, client, author, content, link, tags, null);
+        }
+    }
+
+    function saveBlog(title, client, author, content, link, tags, imageData) {
+        const blogs = JSON.parse(localStorage.getItem('nexusBlogs')) || [];
+        blogs.push({
+            id: Date.now().toString(),
+            title, client, author, content,
+            link: link || '',
+            image: imageData || '',
+            tags: tags.length ? tags : ['general'],
+            date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+            views: 0
+        });
+        localStorage.setItem('nexusBlogs', JSON.stringify(blogs));
+        hideForm();
+        showToast('✅ Blog published successfully!');
+    }
+
+    function loadBlogs() {
+        const blogs = JSON.parse(localStorage.getItem('nexusBlogs')) || [];
+        const emptyPage = document.getElementById('emptyPage');
+        const blogList = document.getElementById('blogList');
+
+        if (!blogs.length) {
+            emptyPage.style.display = 'flex';
+            blogList.style.display = 'none';
+            return;
+        }
+        emptyPage.style.display = 'none';
+        blogList.style.display = 'grid';
+        blogList.innerHTML = '';
+
+        blogs.slice().reverse().forEach(blog => {
+            const card = document.createElement('div');
+            card.className = 'blog-card';
+            const imgHtml = blog.image
+                ? `<img src="${escapeHtml(blog.image)}" alt="${escapeHtml(blog.title)}">`
+                : '';
+            card.innerHTML = `
+                ${imgHtml}
+                <button class="blog-delete" data-delete-id="${escapeHtml(blog.id)}" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <div class="blog-card-content">
+                    <h3>${escapeHtml(blog.title)}</h3>
+                    <p>${escapeHtml(blog.content.substring(0, 100))}...</p>
+                    <div class="blog-card-meta">
+                        <span><i class="fas fa-user"></i> ${escapeHtml(blog.author)}</span>
+                        <span><i class="fas fa-calendar-alt"></i> ${escapeHtml(blog.date)}</span>
+                    </div>
+                </div>`;
+            card.addEventListener('click', e => {
+                if (e.target.closest('.blog-delete')) return;
+                openBlog(blog.id);
+            });
+            card.querySelector('.blog-delete').addEventListener('click', e => {
+                e.stopPropagation();
+                if (!confirm('Delete this blog permanently?')) return;
+                const list = JSON.parse(localStorage.getItem('nexusBlogs')) || [];
+                const filtered = list.filter(b => b.id !== blog.id);
+                localStorage.setItem('nexusBlogs', JSON.stringify(filtered));
+                showToast('🗑️ Blog deleted');
+                loadBlogs();
+            });
+            blogList.appendChild(card);
+        });
+    }
+
+    function openBlog(id) {
+        localStorage.setItem('currentBlogId', id);
+        window.location.href = 'blogView.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        init3DBackground();
+        loadBlogs();
+
+        document.getElementById('createBtn').addEventListener('click', e => {
+            e.preventDefault();
+            showForm();
+        });
+        document.getElementById('emptyCreateBtn').addEventListener('click', showForm);
+    });
+</script>
+</body>
+</html>
