@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS — Ultimate Minecraft Client Database</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.net.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.rings.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: #05050a;
+            color: #e8ecf5;
+            overflow-x: hidden;
+            position: relative;
+        }
+        #layer1-vanta, #layer2-rings, #layer3-particles, #layer4-three, #layer5-nebula {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+            pointer-events: none;
+        }
+        #vignette {
+            position: fixed; inset: 0; z-index: 2; pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.8) 100%);
+        }
+        .container {
+            position: relative; z-index: 3;
+            max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem 3rem;
+        }
+        .header-classic {
+            background: rgba(5,5,10,0.85);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-radius: 28px; padding: 2rem 2.8rem;
+            border: 1px solid rgba(100,0,200,0.10);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;
+            position: relative; overflow: hidden;
+        }
+        .header-classic::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(100,0,200,0.3), rgba(0,150,255,0.3), rgba(200,0,150,0.3), transparent);
+            animation: header-scan 4s linear infinite;
+        }
+        @keyframes header-scan { 0% { left: -100%; } 100% { left: 100%; } }
+        .logo-classic h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 3rem; font-weight: 900; letter-spacing: 3px;
+        }
+        .logo-classic h1 .gradient {
+            background: linear-gradient(135deg, #6a00c0, #0044cc, #c00080, #6a00c0);
+            background-size: 300% 300%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: cosmic-flow 6s ease-in-out infinite;
+        }
+        @keyframes cosmic-flow { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .logo-classic .sub {
+            font-size: 0.7rem; color: #3a2a4a; letter-spacing: 6px;
+            text-transform: uppercase; font-weight: 500; margin-top: 6px;
+        }
+        .header-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; }
+        .btn-auth {
+            padding: 0.6rem 1.6rem; border-radius: 40px;
+            font-size: 0.8rem; font-weight: 600;
+            border: 1px solid rgba(100,0,200,0.15);
+            background: rgba(100,0,200,0.05);
+            color: #8a6a9a; cursor: pointer; transition: all 0.3s;
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none; font-family: 'Inter', sans-serif;
+            position: relative; overflow: hidden;
+        }
+        .btn-auth:hover {
+            background: rgba(100,0,200,0.08);
+            border-color: rgba(100,0,200,0.25);
+            transform: translateY(-2px); color: #aa8aba;
+            box-shadow: 0 8px 30px rgba(100,0,200,0.10);
+        }
+        .btn-auth i { color: #6a00c0; }
+
+        .stats-bar {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem; margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: rgba(5,5,10,0.8); backdrop-filter: blur(16px);
+            border-radius: 20px; padding: 1.2rem 1.5rem;
+            border: 1px solid rgba(100,0,200,0.05);
+            text-align: center; position: relative; overflow: hidden;
+            transition: all 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-4px); border-color: rgba(100,0,200,0.15); }
+        .stat-card .stat-icon {
+            font-size: 1.5rem; margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #6a00c0, #0044cc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .stat-card .stat-value {
+            font-family: 'Orbitron', monospace; font-size: 1.8rem; font-weight: 900;
+            background: linear-gradient(135deg, #6a00c0, #0044cc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .stat-card .stat-label {
+            font-size: 0.7rem; color: #4a3a5a;
+            text-transform: uppercase; letter-spacing: 2px; margin-top: 0.3rem;
+        }
+
+        .search-classic {
+            background: rgba(5,5,10,0.8); backdrop-filter: blur(16px);
+            border-radius: 60px; padding: 0.9rem 2rem;
+            border: 1px solid rgba(100,0,200,0.05);
+            display: flex; align-items: center; gap: 1rem;
+            margin-bottom: 1.5rem; transition: all 0.4s ease;
+        }
+        .search-classic:focus-within { border-color: rgba(100,0,200,0.15); box-shadow: 0 0 60px rgba(100,0,200,0.04); }
+        .search-classic i {
+            background: linear-gradient(135deg, #6a00c0, #0044cc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 1.2rem;
+        }
+        .search-classic input {
+            background: transparent; border: none; color: #e8ecf5;
+            font-size: 1rem; font-weight: 500; width: 100%;
+            outline: none; font-family: 'Inter', sans-serif;
+        }
+        .search-classic input::placeholder { color: #3a2a4a; font-weight: 400; }
+        .search-classic .count-badge {
+            font-size: 0.7rem; color: #4a3a5a;
+            background: rgba(255,255,255,0.02);
+            padding: 0.2rem 1rem; border-radius: 40px;
+            border: 1px solid rgba(100,0,200,0.03); white-space: nowrap;
+        }
+
+        .filter-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; padding: 0.5rem 0; }
+        .filter-tab {
+            padding: 0.5rem 1.6rem; border-radius: 40px;
+            font-size: 0.75rem; font-weight: 600;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(100,0,200,0.04);
+            color: #4a3a5a; cursor: pointer;
+            transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .filter-tab:hover { color: #8a6a9a; transform: translateY(-2px); }
+        .filter-tab.active {
+            background: rgba(100,0,200,0.06);
+            border-color: rgba(100,0,200,0.12);
+            color: #8a6a9a;
+            box-shadow: 0 0 20px rgba(100,0,200,0.03);
+        }
+
+        .client-grid-classic {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .client-card-classic {
+            background: rgba(5,5,10,0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 24px; padding: 1.8rem 2rem;
+            border: 1px solid rgba(100,0,200,0.04);
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative; overflow: hidden;
+            cursor: pointer; animation: card-enter 0.6s ease both;
+        }
+        @keyframes card-enter {
+            0% { opacity: 0; transform: translateY(40px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .client-card-classic:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(100,0,200,0.10);
+            background: rgba(5,5,10,0.9);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(100,0,200,0.03);
+        }
+        .client-card-classic .top {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; gap: 0.5rem;
+        }
+        .client-card-classic .name {
+            font-size: 1.2rem; font-weight: 700; letter-spacing: -0.3px;
+            font-family: 'Orbitron', monospace; transition: color 0.3s;
+        }
+        .client-card-classic:hover .name { color: #8a6a9a; }
+        .client-card-classic .version-tag {
+            font-size: 0.5rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            background: rgba(100,0,200,0.06); color: #8a6a9a;
+            padding: 0.15rem 0.8rem; border-radius: 30px;
+            border: 1px solid rgba(100,0,200,0.06); white-space: nowrap;
+        }
+        .client-card-classic .desc {
+            font-size: 0.85rem; color: #4a3a5a;
+            margin-top: 0.5rem; line-height: 1.6;
+        }
+        .client-card-classic .meta {
+            display: flex; align-items: center; gap: 1rem;
+            margin-top: 0.8rem; font-size: 0.7rem; color: #3a2a4a;
+            flex-wrap: wrap;
+        }
+        .client-card-classic .meta i {
+            background: linear-gradient(135deg, #6a00c0, #0044cc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            width: 16px;
+        }
+        .client-card-classic .meta .badge {
+            background: rgba(255,255,255,0.02);
+            padding: 0.15rem 0.8rem; border-radius: 30px;
+            border: 1px solid rgba(100,0,200,0.03);
+        }
+        .client-card-classic .footer-card {
+            margin-top: 1rem; display: flex;
+            align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 0.5rem;
+        }
+        .client-card-classic .footer-card .type {
+            font-size: 0.6rem; color: #2a1a3a;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .client-card-classic .btn-view {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 0.3rem 1.4rem; border-radius: 40px;
+            font-size: 0.7rem; font-weight: 600;
+            background: rgba(100,0,200,0.06);
+            border: 1px solid rgba(100,0,200,0.06);
+            color: #8a6a9a; text-decoration: none;
+            transition: all 0.3s; cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .client-card-classic .btn-view:hover {
+            background: rgba(100,0,200,0.10);
+            border-color: rgba(100,0,200,0.12);
+            transform: translateX(-3px);
+        }
+
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(20px);
+            z-index: 1000; display: none;
+            align-items: center; justify-content: center; padding: 2rem;
+        }
+        .modal-overlay.show { display: flex; animation: modal-in 0.3s ease; }
+        @keyframes modal-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+        .modal-content {
+            background: rgba(5,5,10,0.95);
+            border: 1px solid rgba(100,0,200,0.10);
+            border-radius: 28px; padding: 3rem;
+            max-width: 700px; width: 100%;
+            position: relative; overflow: hidden;
+            animation: modal-content-in 0.4s ease;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.9);
+        }
+        @keyframes modal-content-in {
+            0% { opacity: 0; transform: scale(0.8) translateY(30px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-content::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #6a00c0, #0044cc, #c00080, #6a00c0);
+        }
+        .modal-close {
+            position: absolute; top: 1.5rem; right: 1.5rem;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(100,0,200,0.06);
+            border: 1px solid rgba(100,0,200,0.06);
+            color: #8a6a9a; font-size: 1rem; cursor: pointer;
+            transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-close:hover { background: rgba(100,0,200,0.10); transform: rotate(90deg); }
+        .modal-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #6a00c0, #0044cc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .modal-version { font-size: 0.8rem; color: #4a3a5a; margin-bottom: 1.5rem; }
+        .modal-desc {
+            font-size: 1rem; color: #6a5a7a;
+            line-height: 1.8; margin-bottom: 2rem;
+        }
+        .modal-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem; margin-bottom: 2rem;
+        }
+        .modal-stat {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(100,0,200,0.03);
+            border-radius: 16px; padding: 1rem; text-align: center;
+        }
+        .modal-stat .value {
+            font-family: 'Orbitron', monospace; font-size: 1.5rem; font-weight: 900;
+            background: linear-gradient(135deg, #6a00c0, #0044cc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .modal-stat .label {
+            font-size: 0.6rem; color: #4a3a5a;
+            text-transform: uppercase; letter-spacing: 1px; margin-top: 0.3rem;
+        }
+        .modal-rating { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2rem; }
+        .modal-rating .stars { color: #6a00c0; font-size: 1.2rem; }
+        .modal-rating .rating-value { font-size: 1.2rem; font-weight: 700; color: #e8ecf5; }
+        .modal-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .btn-modal {
+            padding: 0.8rem 2rem; border-radius: 40px;
+            font-size: 0.9rem; font-weight: 600;
+            border: none; cursor: pointer; transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none;
+        }
+        .btn-modal.primary {
+            background: linear-gradient(135deg, #6a00c0, #0044cc);
+            color: #fff;
+        }
+        .btn-modal.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(100,0,200,0.20);
+        }
+        .btn-modal.secondary {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(100,0,200,0.03);
+            color: #6a5a7a;
+        }
+        .btn-modal.secondary:hover { background: rgba(255,255,255,0.04); color: #e8ecf5; }
+
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            background: rgba(5,5,10,0.95);
+            backdrop-filter: blur(20px);
+            padding: 1rem 1.8rem; border-radius: 16px;
+            border: 1px solid rgba(100,0,200,0.06);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            color: #e8ecf5; font-size: 0.9rem; z-index: 9999;
+            transform: translateY(100px); opacity: 0;
+            transition: all 0.4s ease; max-width: 400px;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-color: rgba(100,0,200,0.08); }
+        .toast.error { border-color: rgba(100,0,200,0.12); }
+        .toast i { margin-right: 10px; }
+        .toast.success i { color: #6a00c0; }
+        .toast.error i { color: #ff6b6b; }
+
+        .footer-classic {
+            text-align: center; padding: 3rem 0 1rem;
+            color: #2a1a3a; font-size: 0.7rem; letter-spacing: 3px;
+            border-top: 1px solid rgba(100,0,200,0.02); margin-top: 3rem;
+        }
+        .footer-classic i {
+            background: linear-gradient(135deg, #6a00c0, #0044cc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin: 0 6px;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header-classic { flex-direction: column; align-items: stretch; text-align: center; padding: 1.5rem; }
+            .logo-classic h1 { font-size: 2rem; }
+            .client-grid-classic { grid-template-columns: 1fr; }
+            .filter-tabs { justify-content: center; }
+            .modal-content { padding: 2rem; }
+        }
+        @media (max-width: 480px) {
+            .logo-classic h1 { font-size: 1.6rem; }
+            .client-card-classic { padding: 1.2rem; }
+            .filter-tab { font-size: 0.65rem; padding: 0.3rem 1rem; }
+            .modal-content { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="layer1-vanta"></div>
+    <div id="layer2-rings"></div>
+    <div id="layer3-particles"></div>
+    <div id="layer4-three"></div>
+    <canvas id="layer5-nebula"></canvas>
+    <div id="vignette"></div>
+
+    <div class="container">
+        <header class="header-classic">
+            <div class="logo-classic">
+                <h1><span class="gradient">NEXUS</span></h1>
+                <div class="sub">Minecraft Client Database</div>
+            </div>
+            <div class="header-actions">
+                <a href="cmC.html" class="btn-auth"><i class="fas fa-list"></i> Contents</a>
+                <a href="cmS.html" class="btn-auth"><i class="fas fa-shopping-cart"></i> Shop</a>
+                <a href="cmCo.html" class="btn-auth"><i class="fas fa-handshake"></i> Collaboration</a>
+                <a href="cmB.html" class="btn-auth"><i class="fas fa-blog"></i> Blog</a>
+                <button class="btn-auth" id="btnAI"><i class="fas fa-robot"></i> AI</button>
+            </div>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-cube"></i></div>
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">Total Clients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-fire"></i></div>
+                <div class="stat-value" id="statPopular">0</div>
+                <div class="stat-label">Popular</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-ghost"></i></div>
+                <div class="stat-value" id="statGhost">0</div>
+                <div class="stat-label">Ghost</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-crossed-swords"></i></div>
+                <div class="stat-value" id="statPvp">0</div>
+                <div class="stat-label">PvP</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-gem"></i></div>
+                <div class="stat-value" id="statCrystal">0</div>
+                <div class="stat-label">Crystal</div>
+            </div>
+        </div>
+
+        <div class="search-classic">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search the void..." id="searchInput">
+            <span class="count-badge" id="resultCount">0 clients</span>
+        </div>
+
+        <div class="filter-tabs" id="filterTabs">
+            <span class="filter-tab active" data-filter="all">All</span>
+            <span class="filter-tab" data-filter="popular">Popular</span>
+            <span class="filter-tab" data-filter="ghost">Ghost</span>
+            <span class="filter-tab" data-filter="pvp">PvP</span>
+            <span class="filter-tab" data-filter="utility">Utility</span>
+            <span class="filter-tab" data-filter="crystal">Crystal</span>
+            <span class="filter-tab" data-filter="classic">Classic</span>
+        </div>
+
+        <div class="client-grid-classic" id="clientGrid"></div>
+
+        <div class="footer-classic">
+            <i class="fas fa-atom"></i> NEXUS — Cosmic Void Edition <i class="fas fa-atom"></i>
+            <br><span style="font-size:0.6rem; opacity:0.3;">2026 · All clients listed for educational purposes</span>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+            <div class="modal-title" id="modalTitle">Client Name</div>
+            <div class="modal-version" id="modalVersion">Version</div>
+            <div class="modal-desc" id="modalDesc">Description</div>
+            <div class="modal-stats">
+                <div class="modal-stat">
+                    <div class="value" id="modalDownloads">0</div>
+                    <div class="label">Downloads</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="value" id="modalType">Type</div>
+                    <div class="label">Category</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="value" id="modalRating">5.0</div>
+                    <div class="label">Rating</div>
+                </div>
+            </div>
+            <div class="modal-rating">
+                <div class="stars" id="modalStars">★★★★★</div>
+                <div class="rating-value" id="modalRatingValue">5.0 / 5.0</div>
+            </div>
+            <div class="modal-actions">
+                <a href="#" class="btn-modal primary" id="modalDownloadLink"><i class="fas fa-download"></i> Download</a>
+                <button class="btn-modal secondary" id="modalFavorite"><i class="fas fa-heart"></i> Add to Favorites</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success!</span>
+    </div>
+
+    <script>
+        // ==================== 3D BACKGROUND LAYERS ====================
+        (function initVantaNet() {
+            const el = document.getElementById('layer1-vanta');
+            if (typeof VANTA !== 'undefined' && typeof VANTA.NET !== 'undefined') {
+                VANTA.NET({
+                    el, mouseControls: true, touchControls: true, gyroControls: false,
+                    minHeight: 200, minWidth: 200, scale: 1, scaleMobile: 0.8,
+                    color: 0x6a00c0, backgroundColor: 0x05050a,
+                    points: 20, maxDistance: 28, spacing: 24, showDots: false
+                });
+            }
+        })();
+
+        (function initVantaRings() {
+            const el = document.getElementById('layer2-rings');
+            if (typeof VANTA !== 'undefined' && typeof VANTA.RINGS !== 'undefined') {
+                VANTA.RINGS({
+                    el, mouseControls: true, touchControls: true, gyroControls: false,
+                    minHeight: 200, minWidth: 200, scale: 1, scaleMobile: 0.5,
+                    color: 0x0044cc, backgroundColor: 0x05050a
+                });
+                el.style.opacity = 0.5;
+            }
+        })();
+
+        (function initParticlesJS() {
+            const el = document.getElementById('layer3-particles');
+            if (typeof particlesJS !== 'undefined') {
+                particlesJS(el.id, {
+                    particles: {
+                        number: { value: 150, density: { enable: true, value_area: 800 } },
+                        color: { value: ['#6a00c0', '#0044cc', '#c00080', '#00aaff', '#8800cc'] },
+                        shape: { type: 'circle' },
+                        opacity: { value: 0.2, random: true, anim: { enable: true, speed: 0.8, opacity_min: 0.02, sync: false } },
+                        size: { value: 2.5, random: true, anim: { enable: true, speed: 1.5, size_min: 0.5, sync: false } },
+                        line_linked: { enable: true, distance: 180, color: '#6a00c0', opacity: 0.04, width: 0.5 },
+                        move: { enable: true, speed: 0.25, direction: 'none', random: true, straight: false, out_mode: 'out', bounce: false }
+                    },
+                    interactivity: {
+                        detect_on: 'canvas',
+                        events: { onhover: { enable: true, mode: 'bubble' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                        modes: { bubble: { distance: 250, size: 4, duration: 2, opacity: 0.12, speed: 3 }, push: { particles_nb: 4 } }
+                    },
+                    retina_detect: true
+                });
+            }
+        })();
+
+        (function initVoidEnergy() {
+            const container = document.getElementById('layer4-three');
+            if (!container || typeof THREE === 'undefined') return;
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(innerWidth, innerHeight);
+            renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            const count = 3000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            const velocities = [];
+            for (let i = 0; i < count; i++) {
+                const radius = 0.5 + Math.random() * 12;
+                const angle = Math.random() * Math.PI * 2;
+                const height = (Math.random() - 0.5) * 8;
+                positions[i * 3] = Math.cos(angle) * radius;
+                positions[i * 3 + 1] = height;
+                positions[i * 3 + 2] = Math.sin(angle) * radius;
+                const c = Math.random();
+                if (c < 0.33) { colors[i*3]=0.4; colors[i*3+1]=0; colors[i*3+2]=0.75; }
+                else if (c < 0.66) { colors[i*3]=0; colors[i*3+1]=0.27; colors[i*3+2]=0.8; }
+                else { colors[i*3]=0.75; colors[i*3+1]=0; colors[i*3+2]=0.5; }
+                velocities.push({ angle, radius, height, speed: 0.1 + Math.random() * 0.2, floatSpeed: 0.2 + Math.random() * 0.3, phase: Math.random() * Math.PI * 2 });
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            const material = new THREE.PointsMaterial({ size: 0.08, vertexColors: true, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, sizeAttenuation: true });
+            const particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+            camera.position.z = 14;
+            let mouseX = 0, mouseY = 0;
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / innerWidth - 0.5) * 2;
+                mouseY = (e.clientY / innerHeight - 0.5) * 2;
+            });
+            let time = 0;
+            function animate() {
+                requestAnimationFrame(animate);
+                time += 0.005;
+                const pos = geometry.attributes.position.array;
+                for (let i = 0; i < count; i++) {
+                    const v = velocities[i];
+                    v.angle += v.speed * 0.01;
+                    const radius = v.radius + Math.sin(time * 0.3 + v.phase) * 0.2;
+                    const height = v.height + Math.sin(time * v.floatSpeed + v.phase) * 0.3;
+                    pos[i * 3] = Math.cos(v.angle) * radius;
+                    pos[i * 3 + 1] = height;
+                    pos[i * 3 + 2] = Math.sin(v.angle) * radius;
+                }
+                geometry.attributes.position.needsUpdate = true;
+                particles.rotation.y += 0.001 + mouseX * 0.0002;
+                particles.rotation.x += mouseY * 0.0001;
+                renderer.render(scene, camera);
+            }
+            animate();
+            addEventListener('resize', () => {
+                camera.aspect = innerWidth / innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(innerWidth, innerHeight);
+            });
+        })();
+
+        (function initNebulaSwirl() {
+            const canvas = document.getElementById('layer5-nebula');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let W, H, time = 0;
+            function resize() {
+                W = canvas.width = innerWidth;
+                H = canvas.height = innerHeight;
+            }
+            resize();
+            addEventListener('resize', resize);
+            const particles = [];
+            for (let i = 0; i < 200; i++) {
+                particles.push({
+                    size: 1 + Math.random() * 3,
+                    speed: 0.1 + Math.random() * 0.3,
+                    angle: Math.random() * Math.PI * 2,
+                    radius: 50 + Math.random() * 300,
+                    hue: 240 + Math.random() * 80,
+                    phase: Math.random() * Math.PI * 2,
+                    centerX: W / 2 + (Math.random() - 0.5) * 200,
+                    centerY: H / 2 + (Math.random() - 0.5) * 200
+                });
+            }
+            function draw() {
+                requestAnimationFrame(draw);
+                time += 0.005;
+                ctx.clearRect(0, 0, W, H);
+                for (const p of particles) {
+                    const angle = p.angle + time * p.speed * 0.05;
+                    const radius = p.radius + Math.sin(time * 0.2 + p.phase) * 30;
+                    const x = p.centerX + Math.cos(angle) * radius * 0.8;
+                    const y = p.centerY + Math.sin(angle) * radius * 0.5;
+                    const grad = ctx.createRadialGradient(x, y, 0, x, y, p.size * 8);
+                    const hue = (p.hue + Math.sin(time * 0.1 + p.phase) * 20) % 360;
+                    grad.addColorStop(0, `hsla(${hue}, 80%, 60%, 0.15)`);
+                    grad.addColorStop(0.5, `hsla(${hue + 30}, 80%, 50%, 0.06)`);
+                    grad.addColorStop(1, `hsla(${hue + 60}, 80%, 40%, 0)`);
+                    ctx.beginPath();
+                    ctx.arc(x, y, p.size * 8, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x, y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${hue}, 90%, 70%, ${0.15 + Math.sin(time + p.phase) * 0.05})`;
+                    ctx.fill();
+                    p.centerX += (W / 2 - p.centerX) * 0.0005;
+                    p.centerY += (H / 2 - p.centerY) * 0.0005;
+                }
+            }
+            draw();
+            canvas.style.opacity = 0.4;
+        })();
+
+        // ==================== CLIENT DATA ====================
+        const clients = [
+            { name: "Wurst Client", version: "1.8-1.21.8", desc: "Classic, popular, feature-rich cheat client with a long history.", type: "classic", downloads: "8.9K", rating: 4.5, link: "https://www.wurstclient.net/download" },
+            { name: "Meteor Client", version: "1.21.4-1.21.8", desc: "Modern, open-source client with extensive customization.", type: "utility", downloads: "2.3K", rating: 4.8, link: "https://meteorclient.com/download" },
+            { name: "Sigma Client", version: "1.8-1.19", desc: "Advanced client with unique features and premium feel.", type: "popular", downloads: "12.3K", rating: 4.2, link: "https://sigma-client.com/download" },
+            { name: "LiquidBounce", version: "1.16-1.20", desc: "Smooth and fluid client with a beautiful UI.", type: "utility", downloads: "10.1K", rating: 4.6, link: "https://liquidbounce.net/download" },
+            { name: "AOBA Client", version: "1.7-Latest", desc: "Lightweight and efficient for professional players.", type: "pvp", downloads: "9.0K", rating: 4.3, link: "https://aoba-client.com/download" },
+            { name: "Aristois Client", version: "1.16-1.20", desc: "Client with a dedicated launcher for easy use.", type: "utility", downloads: "7.9K", rating: 4.1, link: "https://aristois.net/download" },
+            { name: "Lumina Client", version: "1.16-1.19", desc: "Bright client with advanced lighting system.", type: "ghost", downloads: "11.2K", rating: 4.7, link: "https://lumina-client.com/download" },
+            { name: "ThunderHack", version: "1.21", desc: "Fast client with a high number of hacks.", type: "pvp", downloads: "5.7K", rating: 4.0, link: "https://thunderhack.net/download" },
+            { name: "ClickCrystals", version: "1.21", desc: "Best client for crystal PvP.", type: "crystal", downloads: "6.8K", rating: 4.9, link: "https://clickcrystals.com/download" },
+            { name: "Earthhack", version: "1.21.1", desc: "Fresh client with complete features.", type: "utility", downloads: "2.5K", rating: 4.4, link: "https://earthhack.com/download" },
+            { name: "Dooms Day", version: "1.8-1.21.4", desc: "Stealthy and versatile, great speed.", type: "ghost", downloads: "4.6K", rating: 4.2, link: "https://doomsday-client.com/download" },
+            { name: "Vape Client", version: "1.8.9", desc: "Lightweight and fast for Minecraft 1.8.9.", type: "ghost", downloads: "3.5K", rating: 4.6, link: "https://vape.gg/download" },
+            { name: "Slinky Client", version: "1.8.9-1.7.10", desc: "Classic hack client for old versions.", type: "classic", downloads: "2.5K", rating: 3.9, link: "https://slinky-client.com/download" },
+            { name: "Catlean Client", version: "1.21.4", desc: "Advanced hack client for 1.21.4.", type: "pvp", downloads: "1.2K", rating: 4.1, link: "https://catlean.com/download" },
+            { name: "Oyvey Client", version: "1.21.5", desc: "New client, simple and complete.", type: "utility", downloads: "1.9K", rating: 4.3, link: "https://oyvey-client.com/download" },
+            { name: "System Client", version: "1.21", desc: "Features for crystal PvP in 1.21.", type: "crystal", downloads: "1.9K", rating: 4.0, link: "https://system-client.com/download" },
+            { name: "Elite Client", version: "1.21", desc: "New client with special features for 1.21.", type: "pvp", downloads: "1.9K", rating: 4.2, link: "https://elite-client.com/download" },
+            { name: "Impact Client", version: "1.8-1.20", desc: "One of the oldest and most trusted clients.", type: "classic", downloads: "15.6K", rating: 4.7, link: "https://impactclient.net/download" },
+            { name: "Future Client", version: "1.8-1.19", desc: "Premium client known for its ghost features.", type: "ghost", downloads: "18.2K", rating: 4.8, link: "https://future-client.com/download" },
+            { name: "RusherHack", version: "1.12-1.20", desc: "Popular client for anarchy servers.", type: "popular", downloads: "14.8K", rating: 4.5, link: "https://rusherhack.com/download" },
+            { name: "Kami Blue", version: "1.12-1.20", desc: "Lightweight client for utility and PvP.", type: "utility", downloads: "6.3K", rating: 4.2, link: "https://kamiblue.com/download" },
+            { name: "Phobos Client", version: "1.12-1.16", desc: "Known for its crystal PvP features.", type: "crystal", downloads: "5.1K", rating: 4.4, link: "https://phobos-client.com/download" },
+            { name: "GameSense", version: "1.8-1.19", desc: "Clean client with good visuals.", type: "pvp", downloads: "4.7K", rating: 4.1, link: "https://gamesense-client.com/download" },
+            { name: "ZeroDay", version: "1.8-1.16", desc: "Lightweight client for PvP and utility.", type: "utility", downloads: "3.9K", rating: 3.8, link: "https://zeroday-client.com/download" },
+            { name: "Salhack", version: "1.12-1.16", desc: "Simple client with essential features.", type: "classic", downloads: "4.2K", rating: 4.0, link: "https://salhack.com/download" },
+            { name: "Pyro Client", version: "1.8-1.20", desc: "Premium client with a clean interface.", type: "popular", downloads: "9.7K", rating: 4.6, link: "https://pyro-client.com/download" },
+            { name: "Exhibition", version: "1.8-1.19", desc: "High-quality client with unique modules.", type: "ghost", downloads: "7.5K", rating: 4.5, link: "https://exhibition-client.com/download" },
+            { name: "Mercury Client", version: "1.8-1.20", desc: "Solid client with good performance.", type: "utility", downloads: "5.8K", rating: 4.2, link: "https://mercury-client.com/download" },
+            { name: "Whiteout Client", version: "1.16-1.20", desc: "Ghost client with advanced bypasses.", type: "ghost", downloads: "3.2K", rating: 4.7, link: "https://whiteout-client.com/download" },
+            { name: "Vega Client", version: "1.8-1.19", desc: "Lightweight and fast PvP client.", type: "pvp", downloads: "4.1K", rating: 4.0, link: "https://vega-client.com/download" },
+            { name: "Ares Client", version: "1.8-1.16", desc: "Classic client with a loyal userbase.", type: "classic", downloads: "3.8K", rating: 4.1, link: "https://ares-client.com/download" },
+            { name: "Atlas Client", version: "1.8-1.20", desc: "Modern client with a sleek design.", type: "utility", downloads: "4.5K", rating: 4.3, link: "https://atlas-client.com/download" },
+            { name: "Inertia Client", version: "1.16-1.20", desc: "New client with advanced features.", type: "pvp", downloads: "2.1K", rating: 4.2, link: "https://inertia-client.com/download" },
+            { name: "Crystal Client", version: "1.21", desc: "Specialized in crystal PvP.", type: "crystal", downloads: "3.4K", rating: 4.5, link: "https://crystal-client.com/download" },
+            { name: "Novoline", version: "1.8-1.20", desc: "Premium ghost client with great bypasses.", type: "ghost", downloads: "13.2K", rating: 4.9, link: "https://novoline-client.com/download" },
+            { name: "Spark Client", version: "1.8-1.19", desc: "Fast client with clean GUI.", type: "utility", downloads: "4.9K", rating: 4.4, link: "https://spark-client.com/download" },
+            { name: "Nova Client", version: "1.16-1.21", desc: "Modern client for PvP and utility.", type: "pvp", downloads: "3.7K", rating: 4.3, link: "https://nova-client.com/download" },
+            { name: "Velocity Client", version: "1.8-1.20", desc: "Client focused on movement and velocity.", type: "utility", downloads: "2.8K", rating: 4.0, link: "https://velocity-client.com/download" },
+            { name: "Eclipse Client", version: "1.8-1.19", desc: "Clean client with good features.", type: "ghost", downloads: "3.3K", rating: 4.2, link: "https://eclipse-client.com/download" },
+            { name: "Sapphire Client", version: "1.8-1.20", desc: "Premium client with unique modules.", type: "popular", downloads: "6.9K", rating: 4.6, link: "https://sapphire-client.com/download" },
+            { name: "Carbon Client", version: "1.16-1.20", desc: "Lightweight client for crystal PvP.", type: "crystal", downloads: "2.4K", rating: 4.1, link: "https://carbon-client.com/download" },
+            { name: "Anarchy Client", version: "1.12-1.20", desc: "Specialized for anarchy servers.", type: "popular", downloads: "8.3K", rating: 4.4, link: "https://anarchy-client.com/download" },
+            { name: "Hypixel Client", version: "1.8-1.21", desc: "Designed specifically for Hypixel.", type: "pvp", downloads: "11.7K", rating: 4.8, link: "https://hypixel-client.com/download" },
+            { name: "Minemen Client", version: "1.8-1.21", desc: "Optimized for Minemen Club PvP.", type: "pvp", downloads: "9.2K", rating: 4.6, link: "https://minemen-client.com/download" },
+            { name: "Cubecraft Client", version: "1.8-1.21", desc: "Tailored for Cubecraft servers.", type: "utility", downloads: "4.8K", rating: 4.2, link: "https://cubecraft-client.com/download" },
+            { name: "Bedwars Client", version: "1.8-1.21", desc: "Specialized for Bedwars gameplay.", type: "pvp", downloads: "7.1K", rating: 4.5, link: "https://bedwars-client.com/download" },
+            { name: "Skywars Client", version: "1.8-1.21", desc: "Optimized for Skywars.", type: "pvp", downloads: "6.3K", rating: 4.3, link: "https://skywars-client.com/download" },
+            { name: "PvP Client", version: "1.8-1.21", desc: "General PvP focused client.", type: "pvp", downloads: "5.6K", rating: 4.0, link: "https://pvp-client.com/download" },
+            { name: "Utility Client", version: "1.16-1.21", desc: "Collection of utility modules.", type: "utility", downloads: "3.9K", rating: 4.1, link: "https://utility-client.com/download" },
+            { name: "Ghost Client", version: "1.8-1.21", desc: "Stealth client for undetected play.", type: "ghost", downloads: "8.5K", rating: 4.5, link: "https://ghost-client.com/download" },
+            { name: "Crystal PvP Client", version: "1.21", desc: "Dedicated crystal PvP client.", type: "crystal", downloads: "4.2K", rating: 4.6, link: "https://crystalpvp-client.com/download" },
+            { name: "Classic Client", version: "1.7-1.12", desc: "Old school client for classic PvP.", type: "classic", downloads: "3.1K", rating: 3.9, link: "https://classic-client.com/download" },
+            { name: "Lunar Client", version: "1.8-1.21.8", desc: "Premium client with cosmic power.", type: "popular", downloads: "12.8K", rating: 4.8, link: "https://www.lunarclient.com/download" }
+        ];
+
+        // ==================== STATE ====================
+        let favorites = JSON.parse(localStorage.getItem('nexusFavorites')) || [];
+        let currentModalClient = null;
+
+        // ==================== UTILS ====================
+        const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toast.className = 'toast ' + type;
+            toastMessage.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        // ==================== STATS ====================
+        function updateStats() {
+            document.getElementById('statTotal').textContent = clients.length;
+            document.getElementById('statPopular').textContent = clients.filter(c => c.type === 'popular').length;
+            document.getElementById('statGhost').textContent = clients.filter(c => c.type === 'ghost').length;
+            document.getElementById('statPvp').textContent = clients.filter(c => c.type === 'pvp').length;
+            document.getElementById('statCrystal').textContent = clients.filter(c => c.type === 'crystal').length;
+        }
+
+        // ==================== RENDER ====================
+        const TYPE_ICONS = {
+            popular: 'fa-fire', ghost: 'fa-ghost', pvp: 'fa-crossed-swords',
+            utility: 'fa-tools', crystal: 'fa-gem', classic: 'fa-scroll'
+        };
+        const TYPE_COLORS = {
+            popular: '#6a00c0', ghost: '#0044cc', pvp: '#c00080',
+            utility: '#00aaff', crystal: '#8800cc', classic: '#4a00a0'
+        };
+
+        function renderClients(filter = "all", search = "") {
+            const grid = document.getElementById('clientGrid');
+            const resultCount = document.getElementById('resultCount');
+            let filtered = clients;
+
+            if (filter !== "all") filtered = filtered.filter(c => c.type === filter);
+            if (search.trim()) {
+                const term = search.toLowerCase().trim();
+                filtered = filtered.filter(c =>
+                    c.name.toLowerCase().includes(term) ||
+                    c.desc.toLowerCase().includes(term) ||
+                    c.version.toLowerCase().includes(term)
+                );
+            }
+
+            resultCount.textContent = filtered.length + ' clients';
+
+            if (!filtered.length) {
+                grid.innerHTML = `
+                    <div style="grid-column:1/-1; text-align:center; padding:4rem 0; color:#2a1a3a;">
+                        <i class="fas fa-search" style="font-size:3rem; opacity:0.1; display:block; margin-bottom:1rem;"></i>
+                        <p style="font-size:1.1rem;">No clients found in the void</p>
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map((client, index) => {
+                const icon = TYPE_ICONS[client.type] || 'fa-cube';
+                const color = TYPE_COLORS[client.type] || '#6a00c0';
+                const stars = '★'.repeat(Math.round(client.rating)) + '☆'.repeat(5 - Math.round(client.rating));
+                const safeName = escapeHtml(client.name);
+                return `
+                    <div class="client-card-classic" style="animation-delay:${index * 0.04}s;" data-client-name="${safeName}">
+                        <div class="top">
+                            <div class="name">${safeName}</div>
+                            <span class="version-tag">${escapeHtml(client.version)}</span>
+                        </div>
+                        <div class="desc">${escapeHtml(client.desc)}</div>
+                        <div class="meta">
+                            <span><i class="fas fa-download"></i> ${escapeHtml(client.downloads)}</span>
+                            <span class="badge"><i class="fas ${icon}" style="color:${color};"></i> ${client.type}</span>
+                            <span class="badge" style="color:#6a00c0;">${stars}</span>
+                        </div>
+                        <div class="footer-card">
+                            <span class="type"><i class="fas ${icon}" style="color:${color};"></i> ${client.type}</span>
+                            <button class="btn-view" data-view="${safeName}"><i class="fas fa-chevron-right"></i> View</button>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            // Attach handlers (avoids inline onclick XSS risk)
+            grid.querySelectorAll('.client-card-classic').forEach(card => {
+                card.addEventListener('click', () => openModal(card.dataset.clientName));
+            });
+            grid.querySelectorAll('.btn-view').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    openModal(btn.dataset.view);
+                });
+            });
+        }
+
+        // ==================== MODAL ====================
+        function openModal(name) {
+            const client = clients.find(c => c.name === name);
+            if (!client) return;
+            currentModalClient = client;
+
+            document.getElementById('modalTitle').textContent = client.name;
+            document.getElementById('modalVersion').textContent = 'Version: ' + client.version;
+            document.getElementById('modalDesc').textContent = client.desc;
+            document.getElementById('modalDownloads').textContent = client.downloads;
+            document.getElementById('modalType').textContent = client.type.charAt(0).toUpperCase() + client.type.slice(1);
+            document.getElementById('modalRating').textContent = client.rating.toFixed(1);
+            document.getElementById('modalRatingValue').textContent = client.rating.toFixed(1) + ' / 5.0';
+            document.getElementById('modalStars').textContent = '★'.repeat(Math.round(client.rating)) + '☆'.repeat(5 - Math.round(client.rating));
+
+            const dl = document.getElementById('modalDownloadLink');
+            if (client.link) {
+                dl.href = client.link;
+                dl.target = '_blank';
+                dl.rel = 'noopener noreferrer';
+                dl.innerHTML = '<i class="fas fa-download"></i> Download';
+            } else {
+                dl.href = '#';
+                dl.innerHTML = '⚠️ No Link';
+            }
+
+            updateFavoriteBtn();
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+
+        function updateFavoriteBtn() {
+            const btn = document.getElementById('modalFavorite');
+            if (!currentModalClient) return;
+            const isFav = favorites.includes(currentModalClient.name);
+            btn.innerHTML = isFav
+                ? '<i class="fas fa-heart" style="color:#ff6b6b;"></i> Remove from Favorites'
+                : '<i class="fas fa-heart"></i> Add to Favorites';
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+        }
+
+        // ==================== EVENTS ====================
+        document.getElementById('modalClose').addEventListener('click', closeModal);
+        document.getElementById('modalOverlay').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        document.getElementById('modalFavorite').addEventListener('click', function () {
+            if (!currentModalClient) return;
+            if (favorites.includes(currentModalClient.name)) {
+                favorites = favorites.filter(f => f !== currentModalClient.name);
+                showToast(currentModalClient.name + ' removed from favorites!');
+            } else {
+                favorites.push(currentModalClient.name);
+                showToast(currentModalClient.name + ' added to favorites! ❤️');
+            }
+            localStorage.setItem('nexusFavorites', JSON.stringify(favorites));
+            updateFavoriteBtn();
+        });
+
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                renderClients(this.dataset.filter, document.getElementById('searchInput').value);
+            });
+        });
+
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const activeFilter = document.querySelector('.filter-tab.active').dataset.filter;
+            renderClients(activeFilter, this.value);
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeModal();
+                const input = document.getElementById('searchInput');
+                input.value = '';
+                const activeFilter = document.querySelector('.filter-tab.active').dataset.filter;
+                renderClients(activeFilter, '');
+            }
+        });
+
+        document.getElementById('btnAI').addEventListener('click', () => {
+            showToast('🤖 AI assistant coming soon!', 'success');
+        });
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            renderClients('all', '');
+            updateStats();
+        });
+    </script>
+</body>
+</html>
